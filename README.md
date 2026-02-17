@@ -1,14 +1,45 @@
 # Codex Control
 
-Local approval bridge for Codex sessions running in `tmux`.  
-It watches your Codex pane for approval prompts, sends a Pushover notification, and accepts approval/deny actions through a local webhook.
+Codex Control lets you approve Codex permission prompts from your Apple Watch ⌚ while Codex runs in `tmux`.
+When Codex asks for command approval, the watcher sends a push notification and a one-tap Watch Shortcut can approve the prompt through a secure webhook.
 
-## Components
-- `codex_watch.sh`: polls a tmux pane and sends push notifications when approval text appears.
-- `approve_webhook.py`: local HTTP server that converts webhook actions into tmux key presses.
-- `restart.sh`: convenience script to stop both services and start them again with `.env`.
-- `stop.sh`: helper script to stop notification polling (`codex_watch.sh`) only.
-- `.env.example`: template for required and optional configuration.
+## What This Does
+When Codex shows a prompt like "Do you want me to run this command?", the system:
+1. sends you a push notification immediately, and
+2. lets you approve from your watch with a one-tap Shortcut that triggers approval on the server.
+
+## Architecture
+### Components
+- **Codex (`tmux` session):** Codex runs inside a persistent `tmux` session so it keeps running if SSH disconnects.
+- **Watcher (`codex_watch.sh`):** polling loop using `tmux capture-pane` to detect approval prompts and send Pushover alerts.
+- **Webhook (`approve_webhook.py`):** local HTTP server receiving `/approve` actions and injecting keys into Codex via `tmux send-keys`.
+- **Tailscale Serve (HTTPS bridge):** exposes the local webhook over your tailnet using your `*.ts.net` HTTPS URL without opening public ports.
+- **Apple Watch Shortcut ("codex approve"):** watch action that performs a simple `GET` request to approve.
+- **Pushover:** notification channel for reliable phone/watch alerts.
+
+## Apple Watch Workflow
+### Why two apps?
+- **Pushover** = alerts (phone + watch notifications)
+- **Shortcuts** = action (watch executes the approval request)
+
+### Flow
+1. Codex shows an approval prompt.
+2. `codex_watch.sh` detects it and sends a Pushover notification.
+3. You glance at your watch.
+4. You run the `codex approve` Shortcut on the watch.
+5. The Shortcut calls the Tailscale HTTPS endpoint.
+6. `approve_webhook.py` validates the secret and injects approval into the Codex `tmux` session.
+7. Codex continues running the command.
+
+## Security Model
+- Webhook stays local and is exposed to your devices via Tailscale HTTPS (tailnet-only).
+- Approval requires a shared secret (`APPROVE_SECRET`).
+- Secret can be sent as `?secret=...`, which works well for browser and Watch Shortcut flows.
+- `X-Secret` header is also accepted for CLI and automation compatibility.
+- No public port exposure is required.
+
+## Why `tmux`
+`tmux` keeps Codex persistent. You can close Termius/SSH and Codex keeps running. The webhook injects keys into the target `tmux` pane, so approvals still work when you are not actively connected.
 
 ## Requirements
 - `python3`
