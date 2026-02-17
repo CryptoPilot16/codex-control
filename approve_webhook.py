@@ -69,7 +69,6 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/approve":
             tmux_send("y")
-            tmux_send("Enter")
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"Approved")
