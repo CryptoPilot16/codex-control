@@ -106,3 +106,7 @@ tmux attach -t codex
 ```
 
 If your session target differs, use the value of `TMUX_SESSION`.
+
+## Recent Updates (2026-02-17)
+- `approve_webhook.py`: validates `?secret=` query parameter directly and still accepts `X-Secret` header for compatibility.
+- `restart.sh`: explicitly sources `/opt/codex-control/.env` before starting services, avoiding dependence on caller working directory.

@@ -20,13 +20,18 @@ PORT = int(os.environ.get("APPROVE_PORT", "8787"))
 def tmux_send(choice: str):
     subprocess.check_call(["tmux", "send-keys", "-t", SESSION, choice, "Enter"])
 
-
 def has_valid_secret(handler: BaseHTTPRequestHandler) -> bool:
-    header_secret = (handler.headers.get("X-Secret") or "").strip()
-    query = parse_qs(urlparse(handler.path).query)
-    query_secret = (query.get("secret", [""])[0] or "").strip()
-    return SECRET in {header_secret, query_secret}
+    # 1) Allow secret via query string: /approve?secret=...
+    try:
+        parsed = urlparse(handler.path)
+        q = parse_qs(parsed.query)
+        if "secret" in q and q["secret"]:
+            return q["secret"][0] == SECRET
+    except Exception:
+        pass
 
+    # 2) Also allow header (keeps curl working)
+    return handler.headers.get("X-Secret", "") == SECRET
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -95,3 +100,4 @@ class Handler(BaseHTTPRequestHandler):
 
 print(f"Webhook listening on {HOST}:{PORT}")
 HTTPServer((HOST, PORT), Handler).serve_forever()
+
