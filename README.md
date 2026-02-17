@@ -7,6 +7,7 @@ It watches your Codex pane for approval prompts, sends a Pushover notification, 
 - `codex_watch.sh`: polls a tmux pane and sends push notifications when approval text appears.
 - `approve_webhook.py`: local HTTP server that converts webhook actions into tmux key presses.
 - `restart.sh`: convenience script to stop both services and start them again with `.env`.
+- `stop.sh`: helper script to stop notification polling (`codex_watch.sh`) only.
 - `.env.example`: template for required and optional configuration.
 
 ## Requirements
@@ -77,6 +78,12 @@ Supported paths:
 ```bash
 pkill -f approve_webhook.py
 pkill -f codex_watch.sh
+```
+
+To stop notification polling only:
+```bash
+cd /opt/codex-control
+bash ./stop.sh
 ```
 
 ## Logs and Checks
