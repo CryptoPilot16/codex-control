@@ -1,7 +1,9 @@
 # Codex Control
 
-Codex Control lets you approve Codex permission prompts from your Apple Watch ⌚ while Codex runs in `tmux`.
-When Codex asks for command approval, the watcher sends a push notification and a one-tap Watch Shortcut can approve the prompt through a secure webhook.
+**[codex-control.clawnux.com](https://codex-control.clawnux.com)**
+
+Approve Codex permission prompts from your Apple Watch while Codex runs in `tmux`.
+When Codex asks for command approval, the watcher sends a push notification and a one-tap Watch Shortcut approves the prompt through a secure webhook.
 
 ## Remote Codex Approval (Laptop + Apple Watch) 💻
 Codex runs inside `tmux` on a Linux server.
@@ -36,18 +38,14 @@ When an approval prompt appears:
 6. `approve_webhook.py` validates the secret and injects approval into the Codex `tmux` session.
 7. Codex continues running the command.
 
-## Why It Works From Anywhere 💻
+## Why It Works From Anywhere
 The logic runs on the server, not on your laptop or phone.
 
-So you can:
-- code from your laptop via SSH,
-- SSH from your phone, or
-- close your laptop completely.
+- Code from your laptop via SSH
+- SSH from your phone
+- Close your laptop completely
 
-As long as Codex + watcher are running on the server, approvals will reach your iPhone and Apple Watch.
-
-Devices are just approval interfaces.
-The server does all the work.
+As long as Codex + watcher are running on the server, approvals will reach your iPhone and Apple Watch. Devices are just approval interfaces — the server does all the work.
 
 ## Security Model
 - Webhook stays local and is exposed to your devices via Tailscale HTTPS (tailnet-only).
@@ -156,6 +154,13 @@ tmux attach -t codex
 
 If your session target differs, use the value of `TMUX_SESSION`.
 
+## Deployment
+- **Landing page** — [codex-control.clawnux.com](https://codex-control.clawnux.com) (hosted on Vercel)
+- **Webhook + watcher** — runs on your own Linux server, exposed privately via Tailscale
+
+The landing page is a standalone site that documents the project. The webhook and watcher run locally and are never exposed to the public internet.
+
 ## Recent Updates (2026-02-17)
+- Landing page live at [codex-control.clawnux.com](https://codex-control.clawnux.com).
 - `approve_webhook.py`: validates `?secret=` query parameter directly and still accepts `X-Secret` header for compatibility.
 - `restart.sh`: explicitly sources `/opt/codex-control/.env` before starting services, avoiding dependence on caller working directory.
