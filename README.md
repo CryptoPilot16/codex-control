@@ -3,10 +3,15 @@
 Codex Control lets you approve Codex permission prompts from your Apple Watch ⌚ while Codex runs in `tmux`.
 When Codex asks for command approval, the watcher sends a push notification and a one-tap Watch Shortcut can approve the prompt through a secure webhook.
 
-## What This Does
-When Codex shows a prompt like "Do you want me to run this command?", the system:
-1. sends you a push notification immediately, and
-2. lets you approve from your watch with a one-tap Shortcut that triggers approval on the server.
+## Remote Codex Approval (Laptop + Apple Watch) 💻
+Codex runs inside `tmux` on a Linux server.
+
+A watcher script monitors the `tmux` output.
+When an approval prompt appears:
+1. The server sends a push notification (Pushover).
+2. Tapping Approve hits a secure webhook.
+3. The webhook injects the approval keystroke back into `tmux`.
+4. Codex continues execution.
 
 ## Architecture
 ### Components
@@ -30,6 +35,19 @@ When Codex shows a prompt like "Do you want me to run this command?", the system
 5. The Shortcut calls the Tailscale HTTPS endpoint.
 6. `approve_webhook.py` validates the secret and injects approval into the Codex `tmux` session.
 7. Codex continues running the command.
+
+## Why It Works From Anywhere 💻
+The logic runs on the server, not on your laptop or phone.
+
+So you can:
+- code from your laptop via SSH,
+- SSH from your phone, or
+- close your laptop completely.
+
+As long as Codex + watcher are running on the server, approvals will reach your iPhone and Apple Watch.
+
+Devices are just approval interfaces.
+The server does all the work.
 
 ## Security Model
 - Webhook stays local and is exposed to your devices via Tailscale HTTPS (tailnet-only).
