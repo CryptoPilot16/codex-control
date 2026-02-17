@@ -34,12 +34,16 @@ Never commit `.env`.
 - `PUSHOVER_APP_TOKEN` (required): Pushover application token.
 - `PUSHOVER_USER_KEY` (required): destination Pushover user key.
 - `TMUX_SESSION` (default `codex:0.0`): target pane/session for `tmux send-keys` and `capture-pane`.
-- `APPROVE_HOST` (default `127.0.0.1`): webhook bind host.
+- `APPROVE_HOST` (legacy): configured host value; current `approve_webhook.py` build binds to a fixed host instead.
 - `APPROVE_PORT` (default `8787`): webhook bind port.
 - `CODEX_WATCH_LOG` (default `/tmp/codex_watch.log`): watcher log path.
 - `LAST_SENT_FILE` (default `/tmp/codex_approval_last_sent`): cooldown state file.
 - `COOLDOWN_SECONDS` (default `30`): minimum time between push notifications.
 - `APPROVE_URL` (optional): override destination link; secret query param is auto-added if missing.
+
+## Network Binding (Current Behavior)
+The current `approve_webhook.py` version binds to a fixed host configured in code and uses `${APPROVE_PORT}` for the port.
+For public repos, avoid documenting private or internal host addresses; keep host-specific values in local-only changes.
 
 ## Run
 ### Option 1: Start each service manually
@@ -72,7 +76,7 @@ Supported paths:
 - `/approve2`: sends `p` (and Enter on `GET`).
 - `/deny`: sends `esc` on `GET`, sends `3` on `POST`.
 
-`approve_webhook.py` listens on `${APPROVE_HOST}:${APPROVE_PORT}` (default `127.0.0.1:8787`).
+`approve_webhook.py` currently listens on the fixed host configured in code and `${APPROVE_PORT}`.
 
 ## Stop
 ```bash
