@@ -32,7 +32,7 @@ fi
 
 # Prevent spamming every 2 seconds.
 LAST_SENT_FILE="${LAST_SENT_FILE:-/tmp/codex_approval_last_sent}"
-COOLDOWN_SECONDS=0
+COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-30}"
 
 now_ts() { date +%s; }
 
@@ -62,20 +62,28 @@ send_push() {
 
 IN_PROMPT=0
 
-while true; do
-  pane="$(tmux capture-pane -pt "$TMUX_SESSION" -S -60 2>/dev/null)"
+LAST_SIG_FILE="/tmp/codex_last_prompt_sig"
 
-  if echo "$pane" | tail -n 25 | grep -Eq "Would you like to run|Press enter|Yes, proceed"; then
-    if [[ "$IN_PROMPT" -eq 0 ]]; then
-      if should_send; then
-        echo "$(date) detected approval prompt" >> "$LOG_FILE"
-        send_push || echo "$(date) send_push failed" >> "$LOG_FILE"
-        now_ts > "$LAST_SENT_FILE"
-      fi
+while true; do
+  pane="$(tmux capture-pane -pt "$TMUX_SESSION" -S -120 2>/dev/null || true)"
+
+  # Extract the most recent command line from the approval prompt
+  # This grabs the last line that starts with "$ " in the pane.
+  sig="$(echo "$pane" | grep -E '^\$ ' | tail -n 1 | sed 's/[[:space:]]\+/ /g')"
+
+  # Are we currently in an approval screen (look for confirm line near the bottom)?
+  in_prompt=0
+  echo "$pane" | tail -n 80 | grep -Eq "Press enter to confirm|Would you like to run" && in_prompt=1
+
+  if [[ "$in_prompt" -eq 1 && -n "$sig" ]]; then
+    last_sig="$(cat "$LAST_SIG_FILE" 2>/dev/null || true)"
+
+    # Only notify if the command signature changed
+    if [[ "$sig" != "$last_sig" ]]; then
+      echo "$sig" > "$LAST_SIG_FILE"
+      echo "$(date) detected new prompt sig=$sig" >> /tmp/codex_watch.log
+      send_push || echo "$(date) send_push failed" >> /tmp/codex_watch.log
     fi
-    IN_PROMPT=1
-  else
-    IN_PROMPT=0
   fi
 
   sleep 0.5
